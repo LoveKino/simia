@@ -1,0 +1,30 @@
+{
+  "name": "simia",
+  "version": "0.0.1",
+  "description": "Canvas Based Shapes",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/**/*.js",
+    "debug": "cd ./debug && webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LoveKino/simia.git"
+  },
+  "keywords": [
+    "Canvas",
+    "Based",
+    "Shapes"
+  ],
+  "author": "ddchen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LoveKino/simia/issues"
+  },
+  "homepage": "https://github.com/LoveKino/simia#readme",
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.2.3"
+  }
+}
