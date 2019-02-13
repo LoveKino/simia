@@ -3,9 +3,21 @@
  *
  * (2) a way to compose drawings
  */
+const Draw = require('./draw');
+const {
+  measureContext
+} = require('./measure');
 
-/**
- * define LocationMeasure = (xMeasure, yMeasure, wMeasure, hMeasure)
- *
- * define Shape = (LocationMeasure, Properties)
- */
+const {
+  Frame,
+  RectMeasure,
+  Shape
+} = require('./frame');
+
+module.exports = {
+  Frame,
+  RectMeasure,
+  Shape,
+  Draw,
+  measureContext
+};

@@ -62,5 +62,29 @@ rect(ctx, 40.0, 10.0, 30.0, 30.0, {
   }
 });
 
-text(ctx, 'hello world!', 80.0, 10.0, 30.0, 30.0);
-image(ctx, './assets/test.png', 120, 10, 60, 60);
+text(ctx, 80.0, 10.0, 30.0, 30.0, {
+  text: 'hello world!'
+});
+
+image(ctx, 120, 10, 60, 60, {
+  src: './assets/test.png'
+});
+
+const {
+  Frame,
+  Shape,
+  RectMeasure,
+  measureContext
+} = require('../src');
+
+const {
+  fixed
+} = measureContext();
+
+const frame = new Frame([
+  new Shape(new RectMeasure(fixed(0), fixed(100), fixed(100), fixed(20)), rect, {
+    color: 'green'
+  })
+], ctx);
+
+frame.render();

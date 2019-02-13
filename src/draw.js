@@ -25,9 +25,9 @@ module.exports = ({
   defaultLineWidth = 1.0
 } = {}) => {
   const rect = (ctx, x, y, w, h, {
-    border,
+    border = false,
     color = defaultColor
-  }) => {
+  } = {}) => {
     if (border) {
       const lineWidth = border.lineWidth || defaultLineWidth;
       ctx.lineWidth = lineWidth;
@@ -43,12 +43,14 @@ module.exports = ({
 
   /**
    * options = {
+   * text,
    *   color,
    *   lineWidth,
    *   font
    * }
    */
-  const text = (ctx, str, x, y, w, h, {
+  const text = (ctx, x, y, w, h, {
+    text,
     font = defaultFont,
     color = defaultTextColor,
   } = {}) => {
@@ -57,20 +59,22 @@ module.exports = ({
     ctx.textBaseline = 'top';
     // TODO what if textLen is bigger than w
     // const textLen = ctx.measureText(str);
-    ctx.fillText(str, x, y);
+    ctx.fillText(text, x, y);
   };
 
   /**
    * options = {
    * }
    */
-  const image = (ctx, imgSrc, x, y, w, h) => {
+  const image = (ctx, x, y, w, h, {
+    src
+  }) => {
     const img = new Image();
     img.onload = () => {
       ctx.drawImage(img, x, y, w, h);
       // ctx.drawImage(img, x, y);
     };
-    img.src = imgSrc;
+    img.src = src;
   };
 
   const clear = (ctx, x, y, w, h) => {
