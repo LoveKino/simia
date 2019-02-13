@@ -13,7 +13,7 @@ function getRelativeCoordinates(event, element) {
 
   let reference = element.offsetParent;
 
-  while (reference != null) {
+  while (reference) {
     offset.left += reference.offsetLeft;
     offset.top += reference.offsetTop;
     reference = reference.offsetParent;
