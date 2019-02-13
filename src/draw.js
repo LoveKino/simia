@@ -73,9 +73,14 @@ module.exports = ({
     img.src = imgSrc;
   };
 
+  const clear = (ctx, x, y, w, h) => {
+    ctx.clearRect(ctx, x, y, w, h);
+  };
+
   return {
     rect,
     text,
-    image
+    image,
+    clear
   };
 };
