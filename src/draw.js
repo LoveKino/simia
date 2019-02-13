@@ -60,8 +60,22 @@ module.exports = ({
     ctx.fillText(str, x, y);
   };
 
+  /**
+   * options = {
+   * }
+   */
+  const image = (ctx, imgSrc, x, y, w, h) => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, x, y, w, h);
+      // ctx.drawImage(img, x, y);
+    };
+    img.src = imgSrc;
+  };
+
   return {
     rect,
-    text
+    text,
+    image
   };
 };

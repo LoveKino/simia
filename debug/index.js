@@ -47,7 +47,8 @@ ctx.scale(scale, scale);
 
 const {
   rect,
-  text
+  text,
+  image
 } = require('../src/draw')();
 
 rect(ctx, 0.0, 10.0, 30.0, 30.0, {
@@ -62,3 +63,4 @@ rect(ctx, 40.0, 10.0, 30.0, 30.0, {
 });
 
 text(ctx, 'hello world!', 80.0, 10.0, 30.0, 30.0);
+image(ctx, './assets/test.png', 120, 10, 60, 60);
