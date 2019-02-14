@@ -56,6 +56,7 @@ Frame.prototype.render = function() {
   }
 };
 
+// TODO use red-black tree?
 Frame.prototype.getTopShapeAtPoint = function(x0, y0) {
   for (let i = this.shapes.length - 1; i >= 0; i--) {
     const shape = this.shapes[i];
@@ -64,6 +65,9 @@ Frame.prototype.getTopShapeAtPoint = function(x0, y0) {
     }
   }
 };
+
+// TODO get shapes at certain rect => rerender usage.
+Frame.prototype.getShapesAtRect = function(x0, y0, w0, h0) {};
 
 module.exports = {
   Frame,
