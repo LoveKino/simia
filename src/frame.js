@@ -1,3 +1,7 @@
+const {
+  isPointInRect
+} = require('./util');
+
 /**
  * define RectMeasure = (xMeasure, yMeasure, wMeasure, hMeasure)
  */
@@ -49,6 +53,15 @@ Frame.prototype.render = function() {
       shape.rectMeasure.wM.value,
       shape.rectMeasure.hM.value,
       shape.properties);
+  }
+};
+
+Frame.prototype.getTopShapeAtPoint = function(x0, y0) {
+  for (let i = this.shapes.length - 1; i >= 0; i--) {
+    const shape = this.shapes[i];
+    if (isPointInRect(x0, y0, shape.rectMeasure.xM.value, shape.rectMeasure.yM.value, shape.rectMeasure.wM.value, shape.rectMeasure.hM.value)) {
+      return shape;
+    }
   }
 };
 
