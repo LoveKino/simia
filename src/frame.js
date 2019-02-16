@@ -1,5 +1,6 @@
 const {
-  isPointInRect
+  isPointInRect,
+  flatten
 } = require('./util');
 
 /**
@@ -25,8 +26,8 @@ function Shape(rectMeasure, draw, properties) {
 /**
  * define Frame = ([]Shape, canvasCtx)
  */
-function Frame(shapes, ctx) {
-  this.shapes = shapes;
+function Frame(_shapes, ctx) {
+  this.shapes = flatten(_shapes);
   this.ctx = ctx;
 }
 
