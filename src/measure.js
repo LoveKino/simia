@@ -15,11 +15,12 @@
  */
 let measureIdCounter = 0;
 
-function Measure(type, params, deps) {
+function Measure(type, params) {
   this.type = type;
   this.params = params || [];
-  this.deps = deps || [];
-  this.id = measureIdCounter++;
+  this.deps = [];
+  this.ins = [];
+  this.id = measureIdCounter++; // unique id for a Measure object
 
   this.value = null;
 }
@@ -29,14 +30,26 @@ const MORE = 1;
 const LESS = 2;
 const RATIO = 3;
 const SUM = 4;
-const REDUCE = 5;
+const MIN = 5;
+const MAX = 6;
+const REDUCE = 7;
 
-// TODO circle detection
-Measure.prototype.resolve = function(cacheMap) {
+// two way connections
+Measure.prototype.connect = function(dep) {
+  this.deps.push(dep);
+  dep.ins.push(this);
+};
+
+Measure.prototype.resolve = function(cacheMap, seen) {
   // check cache first
   if (cacheMap[this.id] !== undefined) {
     return cacheMap[this.id];
   }
+
+  if (seen[this.id]) { // cycle
+    throw new Error(`cicle detected at measure resolving. Id of current measure is ${this.id}`);
+  }
+  seen[this.id] = 1;
 
   switch (this.type) {
     case FIXED:
@@ -44,25 +57,33 @@ Measure.prototype.resolve = function(cacheMap) {
       break;
 
     case MORE:
-      this.value = this.deps[0].resolve(cacheMap) + this.params[0];
+      this.value = this.deps[0].resolve(cacheMap, seen) + this.params[0];
       break;
 
     case LESS:
-      this.value = this.deps[0].resolve(cacheMap) - this.params[0];
+      this.value = this.deps[0].resolve(cacheMap, seen) - this.params[0];
       break;
 
     case RATIO:
-      this.value = this.deps[0].resolve(cacheMap) * this.params[0];
+      this.value = this.deps[0].resolve(cacheMap, seen) * this.params[0];
       break;
 
     case SUM:
       this.value = this.deps.reduce((prev, dep) => {
-        return prev + dep.resolve(cacheMap);
+        return prev + dep.resolve(cacheMap, seen);
       }, 0);
       break;
 
+    case MIN:
+      this.value = Math.min(...this.deps.map((dep) => dep.resolve(cacheMap, seen), 0));
+      break;
+
+    case MAX:
+      this.value = Math.max(...this.deps.map((dep) => dep.resolve(cacheMap, seen), 0));
+      break;
+
     case REDUCE:
-      this.value = this.params[0](this.deps.map((dep) => dep.resolve(cacheMap)));
+      this.value = this.params[0](this.deps.map((dep) => dep.resolve(cacheMap, seen)));
       break;
 
     default:
@@ -77,45 +98,67 @@ Measure.prototype.resolve = function(cacheMap) {
 // TODO update a measure
 
 // TODO type checking
-const measureContext = () => {
-  // fixed size
-  const fixed = (size) => {
-    return new Measure(FIXED, [size]);
-  };
+// fixed size
+const fixed = (size) => {
+  return new Measure(FIXED, [size]);
+};
 
-  const more = (size) => {
-    return new Measure(MORE, [size]);
-  };
+const more = (size) => {
+  return new Measure(MORE, [size]);
+};
 
-  const less = (size) => {
-    return new Measure(LESS, [size]);
-  };
+const less = (size) => {
+  return new Measure(LESS, [size]);
+};
 
-  // proportion of target
-  const ratio = (target, percentage) => {
-    return new Measure(RATIO, [percentage], [target]);
-  };
+// proportion of target
+const ratio = (target, percentage) => {
+  const m = new Measure(RATIO, [percentage], [target]);
+  m.connect(target);
+  return m;
+};
 
-  // sum of targets
-  const sum = (targets) => {
-    return new Measure(SUM, [], targets);
-  };
+// sum of targets
+const sum = (targets) => {
+  const m = new Measure(SUM, []);
+  targets.forEach((target) => {
+    m.connect(target);
+  });
+  return m;
+};
 
-  // general reduce
-  const reduce = (targets, fn) => {
-    return new Measure(REDUCE, [fn], targets);
-  };
+const min = (targets) => {
+  const m = new Measure(MIN, []);
+  targets.forEach((target) => {
+    m.connect(target);
+  });
+  return m;
+};
 
-  return {
-    fixed,
-    ratio,
-    sum,
-    reduce,
-    more,
-    less
-  };
+const max = (targets) => {
+  const m = new Measure(MAX, []);
+  targets.forEach((target) => {
+    m.connect(target);
+  });
+  return m;
+};
+
+// general reduce
+const reduce = (targets, fn) => {
+  const m = new Measure(REDUCE, [fn]);
+  targets.forEach((target) => {
+    m.connect(target);
+  });
+  return m;
 };
 
 module.exports = {
-  measureContext
+  fixed,
+  ratio,
+  sum,
+  reduce,
+  more,
+  less,
+  min,
+  max
 };

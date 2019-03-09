@@ -1,6 +1,7 @@
 const {
   isPointInRect,
-  flatten
+  flatten,
+  isRectsIntersect
 } = require('./util');
 
 /**
@@ -24,54 +25,98 @@ function Shape(rectMeasure, draw, properties) {
 }
 
 /**
+ * Layout shape just contains a bunch of shapes
+ */
+const LayoutShape = function(rectMeasure, shapes) {
+  this.shapes = shapes;
+  this.rectMeasure = rectMeasure;
+};
+
+LayoutShape.prototype.flattenShapes = function() {
+  return this.shapes.reduce((prev, shape) => {
+    if (shape instanceof LayoutShape) {
+      prev.push(...shape.flattenShapes());
+    } else {
+      prev.push(shape);
+    }
+    return prev;
+  }, []);
+};
+
+/**
  * define Frame = ([]Shape, canvasCtx)
  */
-function Frame(_shapes, ctx) {
-  this.shapes = flatten(_shapes);
-  this.ctx = ctx;
+function Frame(shapes) {
+  this.shapes = flatten(shapes).reduce((prev, shape) => {
+    // expand layout shape
+    if (shape instanceof LayoutShape) {
+      prev.push(...shape.flattenShapes());
+    } else {
+      prev.push(shape);
+    }
+    return prev;
+  }, []);
 }
-
-Frame.prototype.render = function() {
-  // resolve shape rect values
-  const xcache = {},
-    ycache = {},
-    wcache = {},
-    hcache = {};
-  for (let i = 0; i < this.shapes.length; i++) {
-    const shape = this.shapes[i];
-    shape.rectMeasure.xM.resolve(xcache);
-    shape.rectMeasure.yM.resolve(ycache);
-    shape.rectMeasure.wM.resolve(wcache);
-    shape.rectMeasure.hM.resolve(hcache);
-  }
-
-  // draw on the canvas
-  for (let i = 0; i < this.shapes.length; i++) {
-    const shape = this.shapes[i];
-    shape.draw(this.ctx,
-      shape.rectMeasure.xM.value,
-      shape.rectMeasure.yM.value,
-      shape.rectMeasure.wM.value,
-      shape.rectMeasure.hM.value,
-      shape.properties);
-  }
-};
 
 // TODO use red-black tree?
 Frame.prototype.getTopShapeAtPoint = function(x0, y0) {
-  for (let i = this.shapes.length - 1; i >= 0; i--) {
-    const shape = this.shapes[i];
-    if (isPointInRect(x0, y0, shape.rectMeasure.xM.value, shape.rectMeasure.yM.value, shape.rectMeasure.wM.value, shape.rectMeasure.hM.value)) {
-      return shape;
+  return this.shapes.find((shape) => {
+    return isPointInRect(x0, y0, shape.rectMeasure.xM.value, shape.rectMeasure.yM.value, shape.rectMeasure.wM.value, shape.rectMeasure.hM.value);
+  });
+};
+
+// TODO get shapes at certain rect => rerender usage.
+// if a shape's has intersection with rect
+
+Frame.prototype.getIntersectionShapes = function(x0, y0, w0, h0) {
+  return this.shapes.filter((shape) => {
+    return isRectsIntersect(x0, y0, w0, h0,
+      shape.rectMeasure.xM.value,
+      shape.rectMeasure.yM.value,
+      shape.rectMeasure.wM.value,
+      shape.rectMeasure.hM.value);
+  });
+};
+
+const renderFrame = function(frame, canvas) {
+  const ctx = canvas.getContext('2d');
+
+  // resolve shape rect values
+  const xcache = {},
+    xseen = {},
+    ycache = {},
+    yseen = {},
+    wcache = {},
+    wseen = {},
+    hcache = {},
+    hseen = {};
+
+  for (let i = 0; i < frame.shapes.length; i++) {
+    const shape = frame.shapes[i];
+    shape.rectMeasure.xM.resolve(xcache, xseen);
+    shape.rectMeasure.yM.resolve(ycache, yseen);
+    shape.rectMeasure.wM.resolve(wcache, wseen);
+    shape.rectMeasure.hM.resolve(hcache, hseen);
+  }
+
+  // draw on the canvas
+  for (let i = 0; i < frame.shapes.length; i++) {
+    const shape = frame.shapes[i];
+    if (shape.draw) {
+      shape.draw(ctx,
+        shape.rectMeasure.xM.value,
+        shape.rectMeasure.yM.value,
+        shape.rectMeasure.wM.value,
+        shape.rectMeasure.hM.value,
+        shape.properties);
     }
   }
 };
 
-// TODO get shapes at certain rect => rerender usage.
-Frame.prototype.getShapesAtRect = function(x0, y0, w0, h0) {};
-
 module.exports = {
   Frame,
   RectMeasure,
-  Shape
+  Shape,
+  renderFrame,
+  LayoutShape
 };
