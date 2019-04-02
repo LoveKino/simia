@@ -22,35 +22,9 @@ const isIntervalIntersect = (x0, x1, x2, x3) => {
   return !(x1 < x2 || x3 < x0);
 };
 
-function getRelativeCoordinates(event, element) {
-  const position = {
-    x: event.pageX,
-    y: event.pageY
-  };
-
-  const offset = {
-    left: element.offsetLeft,
-    top: element.offsetTop
-  };
-
-  let reference = element.offsetParent;
-
-  while (reference) {
-    offset.left += reference.offsetLeft;
-    offset.top += reference.offsetTop;
-    reference = reference.offsetParent;
-  }
-
-  return {
-    x: position.x - offset.left,
-    y: position.y - offset.top,
-  };
-}
-
 module.exports = {
   flatten,
   isPointInRect,
   isRectsIntersect,
-  isIntervalIntersect,
-  getRelativeCoordinates
+  isIntervalIntersect
 };
