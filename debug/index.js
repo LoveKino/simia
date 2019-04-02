@@ -20,37 +20,51 @@ canvas.addEventListener('click', (e) => {
 const {
   shape
 } = require('../src/shape');
-const s1 = shape(() => {
+const hb = shape(() => {
   return {
     shapeType: 'rect',
-    x: 10,
-    y: 10,
-    w: 100,
+    x: 0,
+    y: 0,
+    w: canvas.w,
     h: 45,
-    color: 'red'
+    color: 'blue'
   };
 });
 
-const s2 = shape((s1) => {
+const title = shape((s) => {
+  const w = 100,
+    h = 20;
+  return {
+    shapeType: 'text',
+    x: s.getOption('x') + (s.getOption('w') - w) / 2,
+    y: s.getOption('y') + (s.getOption('h') - h) / 2,
+    w,
+    h,
+    text: 'debug for simia',
+    color: 'white'
+  };
+}, [hb]);
+
+const s2 = shape((s) => {
   return {
     shapeType: 'rect',
-    x: s1.getOption('x') + s1.getOption('w') + 5,
-    y: s1.getOption('y'),
+    x: s.getOption('x'),
+    y: s.getOption('y') + s.getOption('h') + 5,
     w: 100,
     h: 45,
     color: 'black'
   };
-}, [s1]);
+}, [hb]);
 
 const s3 = shape((s) => {
   return {
     shapeType: 'text',
-    x: s.getOption('x') + s.getOption('w') + 5,
-    y: s.getOption('y'),
+    x: s.getOption('x'),
+    y: s.getOption('y') + s.getOption('h') + 5,
     w: 100,
     h: 45,
     text: 'hello world!'
   };
 }, [s2]);
 
-drawFrame(canvas, [s1, s2, s3]);
+drawFrame(canvas, [hb, title, s2, s3]);

@@ -53,14 +53,17 @@ const drawText = (ctx, {
   y,
   textBaseline = 'top',
   stroke = false,
-  fill = true
+  fill = true,
+  color = 'black'
 }) => {
   ctx.font = font;
   ctx.textBaseline = textBaseline;
   if (stroke) {
+    ctx.strokeStyle = color;
     ctx.strokeText(text, x, y);
   }
   if (fill) {
+    ctx.fillStyle = color;
     ctx.fillText(text, x, y);
   }
 };

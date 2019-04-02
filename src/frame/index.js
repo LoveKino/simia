@@ -1,7 +1,4 @@
 const {
-  getCtx
-} = require('../platform');
-const {
   draw
 } = require('../platform/draw');
 
@@ -10,7 +7,7 @@ const {
  */
 
 const drawFrame = (canvas, shapes) => {
-  const ctx = getCtx(canvas);
+  const ctx = canvas.getCtx();
 
   shapes.forEach((s) => {
     s.resolve();

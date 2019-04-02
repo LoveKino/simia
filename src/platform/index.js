@@ -1,6 +1,16 @@
 const defW = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 const defH = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
+function CustomCanvas(oriCanvas, w, h) {
+  this.canvas = oriCanvas;
+  this.w = w;
+  this.h = h;
+}
+
+CustomCanvas.prototype.getCtx = function() {
+  return this.canvas.getContext('2d');
+};
+
 const attach = (node, w = defW, h = defH) => {
   const canvas = document.createElement('canvas');
 
@@ -15,11 +25,8 @@ const attach = (node, w = defW, h = defH) => {
   ctx.scale(scale, scale);
 
   node.appendChild(canvas);
-  return canvas;
-};
 
-const getCtx = (canvas) => {
-  return canvas.getContext('2d');
+  return new CustomCanvas(canvas, w, h);
 };
 
 function getRelativeCoordinates(event, element) {
@@ -49,6 +56,5 @@ function getRelativeCoordinates(event, element) {
 
 module.exports = {
   attach,
-  getRelativeCoordinates,
-  getCtx
+  getRelativeCoordinates
 };
