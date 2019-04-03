@@ -91,9 +91,9 @@
   !*** ../src/frame/index.js ***!
   \*****************************/
 /*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-eval("const {\n  draw\n} = __webpack_require__(/*! ../platform/draw */ \"../src/platform/draw.js\");\n\n/**\n * frame of canvas\n */\n\nconst drawFrame = (canvas, shapes) => {\n  const ctx = canvas.getCtx();\n\n  shapes.forEach((s) => {\n    s.resolve();\n    draw(ctx, s.getOptions());\n  });\n};\n\nmodule.exports = {\n  drawFrame\n};\n\n\n//# sourceURL=webpack:///../src/frame/index.js?");
+eval("/**\n * frame of canvas\n */\n\nconst drawFrame = (canvas, shapes) => {\n  const ctx = canvas.getCtx();\n\n  shapes.forEach((s) => {\n    s.resolve();\n    s.draw(ctx);\n  });\n};\n\nmodule.exports = {\n  drawFrame\n};\n\n\n//# sourceURL=webpack:///../src/frame/index.js?");
 
 /***/ }),
 
@@ -124,9 +124,9 @@ eval("const defW = Math.max(document.documentElement.clientWidth, window.innerWi
   !*** ../src/shape/index.js ***!
   \*****************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-eval("/**\n * shape can depend on each other\n */\n\nconst RESOLVED = 1;\nconst UNRESOLVED = 2;\n\n// depFun = (shapes...) => opts\nconst Shape = function(depFun, deps = []) {\n  this.depFun = depFun;\n  this.deps = deps;\n  this.options = {};\n  this.status = UNRESOLVED;\n};\n\nShape.prototype.resolve = function() {\n  if (this.status === UNRESOLVED) {\n    // resolve dependencies first\n    for (let i = 0; i < this.deps.length; i++) {\n      this.deps[i].resolve();\n    }\n\n    // run dep fun\n    this.options = this.depFun(...this.deps);\n\n    // mark as resolved\n    this.status = RESOLVED;\n  }\n};\n\nShape.prototype.getOption = function(name) {\n  return this.options[name];\n};\n\nShape.prototype.getOptions = function() {\n  return this.options;\n};\n\nconst shape = (depFun, deps) => {\n  return new Shape(depFun, deps);\n};\n\nmodule.exports = {\n  shape\n};\n\n\n//# sourceURL=webpack:///../src/shape/index.js?");
+eval("const {\n  draw\n} = __webpack_require__(/*! ../platform/draw */ \"../src/platform/draw.js\");\n\n/**\n * shape can depend on each other\n */\n\nconst RESOLVED = 1;\nconst UNRESOLVED = 2;\n\n// depFun = (shapes...) => opts\nconst Shape = function(depFun, deps = []) {\n  this.depFun = depFun;\n  this.deps = deps;\n  this.options = {};\n  this.status = UNRESOLVED;\n};\n\nShape.prototype.resolve = function() {\n  if (this.status === UNRESOLVED) {\n    // resolve dependencies first\n    for (let i = 0; i < this.deps.length; i++) {\n      this.deps[i].resolve();\n    }\n\n    // run dep fun\n    this.options = this.depFun(...this.deps);\n\n    // mark as resolved\n    this.status = RESOLVED;\n  }\n};\n\nShape.prototype.getOption = function(name) {\n  return this.options[name];\n};\n\nShape.prototype.draw = function(ctx) {\n  return draw(ctx, this.options);\n};\n\nconst shape = (depFun, deps) => {\n  return new Shape(depFun, deps);\n};\n\nmodule.exports = {\n  shape\n};\n\n\n//# sourceURL=webpack:///../src/shape/index.js?");
 
 /***/ }),
 

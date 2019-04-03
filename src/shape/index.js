@@ -1,3 +1,7 @@
+const {
+  draw
+} = require('../platform/draw');
+
 /**
  * shape can depend on each other
  */
@@ -32,8 +36,8 @@ Shape.prototype.getOption = function(name) {
   return this.options[name];
 };
 
-Shape.prototype.getOptions = function() {
-  return this.options;
+Shape.prototype.draw = function(ctx) {
+  return draw(ctx, this.options);
 };
 
 const shape = (depFun, deps) => {

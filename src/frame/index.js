@@ -1,7 +1,3 @@
-const {
-  draw
-} = require('../platform/draw');
-
 /**
  * frame of canvas
  */
@@ -11,7 +7,7 @@ const drawFrame = (canvas, shapes) => {
 
   shapes.forEach((s) => {
     s.resolve();
-    draw(ctx, s.getOptions());
+    s.draw(ctx);
   });
 };
 
