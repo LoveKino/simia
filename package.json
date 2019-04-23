@@ -24,7 +24,10 @@
   "homepage": "https://github.com/LoveKino/simia#readme",
   "devDependencies": {
     "mocha": "^5.2.0",
-    "webpack": "^4.29.3",
-    "webpack-cli": "^3.2.3"
+    "webpack": "^4.30.0",
+    "webpack-cli": "^3.3.1"
+  },
+  "dependencies": {
+    "pcpjs": "git+ssh://git@github.com/LoveKino/pcpjs.git"
   }
 }
