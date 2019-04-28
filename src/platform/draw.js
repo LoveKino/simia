@@ -5,6 +5,7 @@ const drawRect = (ctx, {
   h,
   color = 'black'
 }) => {
+  if (color === null) return;
   ctx.fillStyle = color;
   ctx.fillRect(x, y, w, h);
 };

@@ -2,75 +2,118 @@ const {
   shapeExp
 } = require('../shape');
 const {
-  toSandboxFun
+  toSandboxFun,
+  Sandbox,
+  getPcpServer,
 } = require('pcpjs/lib/pcp');
+
+const defBoxForShape = {
+  getOption: toSandboxFun(([shapeIdx, attrName], {
+    shapes
+  }) => {
+    return shapes[shapeIdx].getOption(attrName);
+  }),
+
+  '+': toSandboxFun((params) => {
+    return params.reduce((prev, item) => prev + item, 0);
+  }),
+  '-': toSandboxFun((params) => {
+    return params.slice(1).reduce((prev, item) => prev - item, params[0]);
+  }),
+  '/': toSandboxFun(([x, y]) => {
+    return x / y;
+  }),
+  '*': toSandboxFun((params) => {
+    return params.reduce((prev, item) => prev * item, 1);
+  }),
+
+  'max': toSandboxFun((params) => {
+    return Math.max(...params);
+  }),
+
+  'min': toSandboxFun((params) => {
+    return Math.min(...params);
+  })
+};
 
 /**
  * frame of canvas
  */
 
-const Frame = function(canvas, shapeExps, shapeUtil) {
+const Frame = function(canvas, shapeExps, shapeUtil, sandbox) {
   this.canvas = canvas;
-  this.shapeExps = shapeExps;
+  this.shapeExps = flattenShapeExps(shapeExps);
   this.shapeUtil = shapeUtil;
+  this.pcpServer = getPcpServer(new Sandbox(Object.assign({}, defBoxForShape, sandbox)));
+  this.shapeExps.forEach((se) => se.parse(this.pcpServer));
 };
 
 Frame.prototype.draw = function() {
   const ctx = this.canvas.getCtx();
-  this.shapeExps.map((shapeExp) => shapeExp.parse()).forEach((s) => {
-    s.resolve();
-    s.draw(ctx);
+  this.shapeExps.forEach((s) => {
+    s.shape.draw(ctx);
   });
 };
 
-Frame.prototype.serialize = function() {
-  return serializeHelp(this.shapeExps);
+// TODO CRUD shapeExps
+// TODO update shapeExp
+Frame.prototype.updateShapeExp = function(shapeExpIdx, attrName, e) {
+  const upds = this.shapeExps[shapeExpIdx].update(this.pcpServer, attrName, e);
+  const ctx = this.canvas.getCtx();
+  upds.forEach((upd) => {
+    upd.shape.draw(ctx);
+  });
 };
 
-const serializeHelp = (shapeExps) => {
+const flattenShapeExps = (shapeExps) => {
   const result = [];
   const mark = {};
 
   for (let i = 0; i < shapeExps.length; i++) {
-    serializeHelpVisit(shapeExps[i], mark, result);
+    flattenShapeExpsHelp(shapeExps[i], mark, result);
   }
-
-  return JSON.stringify(result);
+  return result;
 };
 
-const serializeHelpVisit = (shapeExp, mark, result) => {
+const flattenShapeExpsHelp = (shapeExp, mark, result) => {
   if (mark[shapeExp.id] !== undefined) {
     return;
   }
 
   for (let i = 0; i < shapeExp.deps.length; i++) {
-    serializeHelpVisit(shapeExp.deps[i], mark, result);
+    flattenShapeExpsHelp(shapeExp.deps[i], mark, result);
   }
 
-  result.push({
-    id: shapeExp.id,
-    deps: shapeExp.deps.map(({
-      id
-    }) => id),
-    exp: shapeExp.exp
-  });
+  result.push(shapeExp);
 
   mark[shapeExp.id] = 1;
 };
 
-module.exports = (canvas, {
+const serializeShapeExps = function(shapeExps) {
+  return JSON.stringify(shapeExps.map((shapeExp) => {
+    return {
+      id: shapeExp.id,
+      deps: shapeExp.deps.map(({
+        id
+      }) => id),
+      exp: shapeExp.exp
+    };
+  }));
+};
+
+module.exports = ({
   shapeExpSandbox = {}
 } = {}) => {
-  const shapeUtil = shapeExp(Object.assign({
-    getCanvasWidth: toSandboxFun(() => canvas.w),
-    getCanvasHeight: toSandboxFun(() => canvas.h)
-  }, shapeExpSandbox));
+  const shapeUtil = shapeExp();
 
-  const getFrame = (shapeExps) => {
-    return new Frame(canvas, shapeExps, shapeUtil);
+  const getFrame = (canvas, shapeExps) => {
+    return new Frame(canvas, shapeExps, shapeUtil, Object.assign({
+      getCanvasWidth: toSandboxFun(() => canvas.w),
+      getCanvasHeight: toSandboxFun(() => canvas.h)
+    }, shapeExpSandbox));
   };
 
-  const deserializeFrame = (txt) => {
+  const deserializeToFrame = (canvas, txt) => {
     const arr = JSON.parse(txt);
 
     // create shapes
@@ -96,12 +139,13 @@ module.exports = (canvas, {
       ses.push(shapeExps[id]);
     }
 
-    return getFrame(ses);
+    return getFrame(canvas, ses);
   };
 
   return {
     getFrame,
     shapeUtil,
-    deserializeFrame
+    deserializeToFrame,
+    serializeShapeExps
   };
 };

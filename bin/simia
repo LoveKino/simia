@@ -1,0 +1,22 @@
+#!/usr/bin/env node
+
+const yargs = require('yargs');
+const path = require('path');
+const {promisify} = require('util');
+const fs = require('fs');
+const writeFile = promisify(fs.writeFile);
+
+yargs.usage(`Usage: bc  
+  --js      js file for shape expression objects
+  --output  output json file path
+    `).help('h').alias('h', 'help');
+
+const {
+  argv
+} = yargs;
+
+const {serializeShapeExps} = require('../src/frame')();
+
+const text = serializeShapeExps(require(path.resolve(process.cwd(), argv.js)));
+
+writeFile(path.resolve(process.cwd(), argv.output), text);

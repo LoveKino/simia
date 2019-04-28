@@ -1,10 +1,4 @@
-const log = console.log.bind(console); // eslint-disable-line
 const {
-  attach
-} = require('../src/platform');
-const {
-  getFrame,
-  // deserializeFrame,
   shapeUtil
 } = require('../src/frame')();
 const {
@@ -16,15 +10,6 @@ const {
   canvasWidth,
   after,
 } = shapeUtil;
-
-/*
-canvas.addEventListener('click', (e) => {
-  const {
-    x,
-    y
-  } = getRelativeCoordinates(e, canvas);
-});
-*/
 
 const header = box(() => {
   const hb = defShape({
@@ -67,7 +52,4 @@ const content = box(() => {
   ];
 });
 
-const canvas = attach(document.getElementById('app'));
-const frame = getFrame(canvas, [header, content]);
-frame.draw();
-frame.updateShapeExp(1, 'color', 'red');
+module.exports = [header, content];

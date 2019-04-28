@@ -28,6 +28,7 @@
     "webpack-cli": "^3.3.1"
   },
   "dependencies": {
-    "pcpjs": "git+ssh://git@github.com/LoveKino/pcpjs.git"
+    "pcpjs": "git+ssh://git@github.com/LoveKino/pcpjs.git",
+    "yargs": "^13.2.2"
   }
 }

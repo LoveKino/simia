@@ -1,11 +1,6 @@
 const {
   shape
 } = require('./shape');
-const {
-  Sandbox,
-  getPcpServer,
-  toSandboxFun
-} = require('pcpjs/lib/pcp');
 
 /**
  * We can use function define a shape, but function is not a easy way to serialize. So we try to define an expression which can be converted to shape.
@@ -21,59 +16,65 @@ const {
  * eg: 1, "rect", true, null, ('+', ('get', '$1', 'x'), 5)
  */
 
-const defBoxForShape = {
-  getOption: toSandboxFun(([shapeIdx, attrName], {
-    shapes
-  }) => {
-    return shapes[shapeIdx].getOption(attrName);
-  }),
-
-  '+': toSandboxFun((params) => {
-    return params.reduce((prev, item) => prev + item, 0);
-  }),
-  '-': toSandboxFun((params) => {
-    return params.slice(1).reduce((prev, item) => prev - item, params[0]);
-  }),
-  '/': toSandboxFun(([x, y]) => {
-    return x / y;
-  }),
-  '*': toSandboxFun((params) => {
-    return params.reduce((prev, item) => prev * item, 1);
-  }),
-};
-
-const ShapeExp = function(id, exp, deps, pcpServer) {
+/**
+ * exp = {attr: [attr expression]}
+ */
+const ShapeExp = function(id, exp, deps) {
   this.id = id;
   this.exp = exp;
   this.deps = deps;
-  this.pcpServer = pcpServer;
 
   // cache
   this.shape = null;
+  this.depShapes = null;
 };
 
-ShapeExp.prototype.parse = function() {
+//this.pcpServer = getPcpServer(new Sandbox(Object.assign({}, defBoxForShape, sandbox)));
+// parse shape expression to shape, and cache the shape.
+ShapeExp.prototype.parse = function(pcpServer) {
   if (this.shape === null) {
-    this.shape = shape((...args) => {
-      const m = {};
-      for (let name in this.exp) {
-        m[name] = this.pcpServer.executeArr(this.exp[name], {
-          shapes: args
-        });
-      }
-      return m;
-    }, this.deps.map((dep) => dep.parse()));
+    this.depShapes = this.deps.map((dep) => dep.parse());
+
+    const m = {};
+    for (let name in this.exp) {
+      m[name] = pcpServer.executeArr(this.exp[name], {
+        shapes: this.depShapes
+      });
+    }
+
+    this.shape = shape(m);
   }
 
   return this.shape;
 };
 
-module.exports = (sandbox = {}) => {
-  const pcpServer = getPcpServer(new Sandbox(Object.assign({}, defBoxForShape, sandbox)));
+ShapeExp.prototype.update = function(pcpServer, attrName, e) {
+  const result = [];
+  this._update(pcpServer, attrName, e, result);
+  return result;
+};
+
+ShapeExp.prototype._update = function(pcpServer, attrName, e, result) {
+  const newAttrValue = pcpServer.executeArr(e, {
+    shapes: this.depShapes
+  });
+
+  if (newAttrValue !== this.shape.getOption(attrName)) {
+    // update shape
+    // TODO, can only resolve specific attribute?
+    this.shape.options[attrName] = newAttrValue;
+    result.push(this);
+    // TODO update depts
+  }
+
+  return result;
+};
+
+module.exports = () => {
   let shapeCounter = 0;
 
   const defShape = (exp, deps = [], id = shapeCounter++) => {
-    return new ShapeExp(id, exp, deps, pcpServer);
+    return new ShapeExp(id, exp, deps);
   };
 
   // c("+", c("getOption", 0, "x"), 5)
@@ -93,7 +94,7 @@ module.exports = (sandbox = {}) => {
     return c('+', c('getOption', index, 'y'), c('/', c('-', c('getOption', index, 'h'), h), 2));
   };
 
-  const under = (index, offset) => {
+  const underY = (index, offset) => {
     return c('+', c('getOption', index, 'y'), c('+', c('getOption', index, 'h'), offset));
   };
 
@@ -105,17 +106,22 @@ module.exports = (sandbox = {}) => {
   const canvasHeight = c('getCanvasHeight');
 
   // a shape is after another shape
-  const after = (shapeExp, exp, {
-    dx = 0,
-    dy = 0,
+  const after = (shapeExp, exp) => {
+    const exps = Array.isArray(exp) ? exp : [exp];
+
+    return exps.reduce((prev, item) => {
+      return afterOne(prev, item);
+    }, shapeExp);
+  };
+
+  const afterOne = (shapeExp, exp) => {
     // TODO
-    baseline = 'bottom' // middle, top
-  } = {}) => {
+    const baseline = exp.baseline || 'bottom';
     let xexp = 0,
       yexp = 0;
     if (baseline === 'bottom') {
-      xexp = c('+', c('getOption', 0, 'x'), c('getOption', 0, 'w'), dx);
-      yexp = c('+', c('-', c('+', c('getOption', 0, 'y'), c('getOption', 0, 'h')), exp.h), dy);
+      xexp = c('+', c('getOption', 0, 'x'), c('getOption', 0, 'w'), exp.dx || 0);
+      yexp = c('+', c('-', c('+', c('getOption', 0, 'y'), c('getOption', 0, 'h')), exp.h), exp.dy || 0);
     }
 
     exp.x = xexp;
@@ -124,14 +130,43 @@ module.exports = (sandbox = {}) => {
     return defShape(exp, [shapeExp]);
   };
 
+  const below = (shapeExp, exp) => {
+    const yexp = c('+', c('getOption', 0, 'y'), c('+', c('getOption', 0, 'h'), exp.dy || 0));
+    exp.y = yexp;
+    exp.x = exp.x || 0;
+
+    return defShape(exp, [shapeExp]);
+  };
+
+  const box = (shapeExps) => {
+    if (typeof shapeExps === 'function') {
+      return box(shapeExps());
+    }
+    const x = c('min', ...shapeExps.map((_, index) => c('getOption', index, 'x')));
+    const y = c('min', ...shapeExps.map((_, index) => c('getOption', index, 'y')));
+    const xe = c('max', ...shapeExps.map((_, index) => c('+', c('getOption', index, 'x'), c('getOption', index, 'w'))));
+    const ye = c('max', ...shapeExps.map((_, index) => c('+', c('getOption', index, 'y'), c('getOption', index, 'h'))));
+
+    return defShape({
+      shapeType: 'rect',
+      color: null,
+      x,
+      y,
+      w: c('-', xe, x),
+      h: c('-', ye, y)
+    }, shapeExps);
+  };
+
   return {
     defShape,
     c,
     centerXIn,
     centerYIn,
-    under,
+    underY,
+    below,
     prop,
     after,
+    box,
     canvasWidth,
     canvasHeight,
   };
