@@ -90,7 +90,7 @@ const flattenShapeExpsHelp = (shapeExp, mark, result) => {
 };
 
 const serializeShapeExps = function(shapeExps) {
-  return JSON.stringify(shapeExps.map((shapeExp) => {
+  return JSON.stringify(flattenShapeExps(shapeExps).map((shapeExp) => {
     return {
       id: shapeExp.id,
       deps: shapeExp.deps.map(({
@@ -142,10 +142,38 @@ module.exports = ({
     return getFrame(canvas, ses);
   };
 
+  const deserializeToFrameFromJsonObj = (canvas, arr) => {
+    // create shapes
+    const shapeExps = arr.reduce((prev, {
+      id,
+      exp
+    }) => {
+      prev[id] = shapeUtil.defShape(exp, [], id);
+      return prev;
+    }, {});
+
+    // build deps
+    arr.forEach(({
+      id,
+      deps
+    }) => {
+      shapeExps[id].deps = deps.map((id) => shapeExps[id]);
+    });
+
+    const ses = [];
+
+    for (let id in shapeExps) {
+      ses.push(shapeExps[id]);
+    }
+
+    return getFrame(canvas, ses);
+  };
+
   return {
     getFrame,
     shapeUtil,
     deserializeToFrame,
-    serializeShapeExps
+    serializeShapeExps,
+    deserializeToFrameFromJsonObj,
   };
 };
