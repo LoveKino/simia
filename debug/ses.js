@@ -1,7 +1,4 @@
 const {
-  shapeUtil
-} = require('../src/frame')();
-const {
   defShape,
   centerXIn,
   centerYIn,
@@ -9,7 +6,7 @@ const {
   box,
   canvasWidth,
   after,
-} = shapeUtil;
+} = require('../src/shape').shapeExp;
 
 const header = box(() => {
   const hb = defShape({

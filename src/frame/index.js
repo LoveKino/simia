@@ -2,10 +2,16 @@ const {
   shapeExp
 } = require('../shape');
 const {
+  defShape
+} = shapeExp;
+const {
   toSandboxFun,
   Sandbox,
   getPcpServer,
 } = require('pcpjs/lib/pcp');
+const {
+  isPointInRect
+} = require('../util');
 
 const defBoxForShape = {
   getOption: toSandboxFun(([shapeIdx, attrName], {
@@ -40,12 +46,22 @@ const defBoxForShape = {
  * frame of canvas
  */
 
-const Frame = function(canvas, shapeExps, shapeUtil, sandbox) {
+const Frame = function(canvas, shapeExps, sandbox) {
   this.canvas = canvas;
   this.shapeExps = flattenShapeExps(shapeExps);
-  this.shapeUtil = shapeUtil;
   this.pcpServer = getPcpServer(new Sandbox(Object.assign({}, defBoxForShape, sandbox)));
   this.shapeExps.forEach((se) => se.parse(this.pcpServer));
+};
+
+Frame.prototype.getOutestShapeIdxAt = function(x, y) {
+  for (let i = this.shapeExps.length - 1; i >= 0; i--) {
+    const shape = this.shapeExps[i].shape;
+
+    if (isPointInRect(x, y, shape.getOption('x'), shape.getOption('y'), shape.getOption('w'), shape.getOption('h'))) {
+      return i;
+    }
+  }
+  return -1;
 };
 
 Frame.prototype.draw = function() {
@@ -104,10 +120,8 @@ const serializeShapeExps = function(shapeExps) {
 module.exports = ({
   shapeExpSandbox = {}
 } = {}) => {
-  const shapeUtil = shapeExp();
-
   const getFrame = (canvas, shapeExps) => {
-    return new Frame(canvas, shapeExps, shapeUtil, Object.assign({
+    return new Frame(canvas, shapeExps, Object.assign({
       getCanvasWidth: toSandboxFun(() => canvas.w),
       getCanvasHeight: toSandboxFun(() => canvas.h)
     }, shapeExpSandbox));
@@ -121,7 +135,7 @@ module.exports = ({
       id,
       exp
     }) => {
-      prev[id] = shapeUtil.defShape(exp, [], id);
+      prev[id] = defShape(exp, [], id);
       return prev;
     }, {});
 
@@ -148,7 +162,7 @@ module.exports = ({
       id,
       exp
     }) => {
-      prev[id] = shapeUtil.defShape(exp, [], id);
+      prev[id] = defShape(exp, [], id);
       return prev;
     }, {});
 
@@ -171,7 +185,6 @@ module.exports = ({
 
   return {
     getFrame,
-    shapeUtil,
     deserializeToFrame,
     serializeShapeExps,
     deserializeToFrameFromJsonObj,

@@ -11,6 +11,10 @@ CustomCanvas.prototype.getCtx = function() {
   return this.canvas.getContext('2d');
 };
 
+CustomCanvas.prototype.addEventListener = function(...args) {
+  this.canvas.addEventListener(...args);
+};
+
 const attach = (node, w = defW, h = defH) => {
   const canvas = document.createElement('canvas');
 
