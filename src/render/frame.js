@@ -1,9 +1,4 @@
-const {
-  shapeExp
-} = require('../shape');
-const {
-  defShape
-} = shapeExp;
+const defShape = require('./shapeExp');
 const {
   toSandboxFun,
   Sandbox,
@@ -19,27 +14,6 @@ const defBoxForShape = {
   }) => {
     return shapes[shapeIdx].getOption(attrName);
   }),
-
-  '+': toSandboxFun((params) => {
-    return params.reduce((prev, item) => prev + item, 0);
-  }),
-  '-': toSandboxFun((params) => {
-    return params.slice(1).reduce((prev, item) => prev - item, params[0]);
-  }),
-  '/': toSandboxFun(([x, y]) => {
-    return x / y;
-  }),
-  '*': toSandboxFun((params) => {
-    return params.reduce((prev, item) => prev * item, 1);
-  }),
-
-  'max': toSandboxFun((params) => {
-    return Math.max(...params);
-  }),
-
-  'min': toSandboxFun((params) => {
-    return Math.min(...params);
-  })
 };
 
 /**
@@ -57,7 +31,12 @@ Frame.prototype.getOutestShapeIdxAt = function(x, y) {
   for (let i = this.shapeExps.length - 1; i >= 0; i--) {
     const shape = this.shapeExps[i].shape;
 
-    if (isPointInRect(x, y, shape.getOption('x'), shape.getOption('y'), shape.getOption('w'), shape.getOption('h'))) {
+    if (
+      isPointInRect(x, y,
+        shape.getOption('x'),
+        shape.getOption('y'),
+        shape.getOption('w'),
+        shape.getOption('h'))) {
       return i;
     }
   }

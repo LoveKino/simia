@@ -1,12 +1,13 @@
 const {
-  defShape,
   centerXIn,
   centerYIn,
   below,
   box,
   canvasWidth,
   after,
-} = require('../src/shape').shapeExp;
+} = require('../src/render/commonShapeExp');
+
+const defShape = require('../src/render/shapeExp');
 
 const header = box(() => {
   const hb = defShape({

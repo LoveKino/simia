@@ -11,26 +11,19 @@ CustomCanvas.prototype.getCtx = function() {
   return this.canvas.getContext('2d');
 };
 
-CustomCanvas.prototype.addEventListener = function(...args) {
-  this.canvas.addEventListener(...args);
-};
+CustomCanvas.prototype.addEventListener = function(type, handler) {
+  this.canvas.addEventListener(type, (e) => {
+    const {
+      x,
+      y
+    } = getRelativeCoordinates(e, this.canvas);
 
-const attach = (node, w = defW, h = defH) => {
-  const canvas = document.createElement('canvas');
-
-  const scale = window.devicePixelRatio; // Change to 1 on retina screens to see blurry canvas.
-  canvas.width = w * scale;
-  canvas.height = h * scale;
-  canvas.style.width = `${w}px`;
-  canvas.style.height = `${h}px`;
-
-  const ctx = canvas.getContext('2d');
-  // Normalize coordinate system to use css pixels.
-  ctx.scale(scale, scale);
-
-  node.appendChild(canvas);
-
-  return new CustomCanvas(canvas, w, h);
+    handler({
+      x,
+      y,
+      sourceEvt: e
+    });
+  });
 };
 
 function getRelativeCoordinates(event, element) {
@@ -58,7 +51,20 @@ function getRelativeCoordinates(event, element) {
   };
 }
 
-module.exports = {
-  attach,
-  getRelativeCoordinates
+module.exports = (node, w = defW, h = defH) => {
+  const canvas = document.createElement('canvas');
+
+  const scale = window.devicePixelRatio; // Change to 1 on retina screens to see blurry canvas.
+  canvas.width = w * scale;
+  canvas.height = h * scale;
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
+
+  const ctx = canvas.getContext('2d');
+  // Normalize coordinate system to use css pixels.
+  ctx.scale(scale, scale);
+
+  node.appendChild(canvas);
+
+  return new CustomCanvas(canvas, w, h);
 };

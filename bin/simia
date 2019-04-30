@@ -15,7 +15,7 @@ const {
   argv
 } = yargs;
 
-const {serializeShapeExps} = require('../src/frame')();
+const {serializeShapeExps} = require('../src/render/frame')();
 
 const text = serializeShapeExps(require(path.resolve(process.cwd(), argv.js)));
 

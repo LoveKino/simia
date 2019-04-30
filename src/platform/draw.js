@@ -93,7 +93,7 @@ const clearRect = (ctx, {
   ctx.clearRect(ctx, x, y, w, h);
 };
 
-const draw = (ctx, opts) => {
+module.exports = (ctx, opts) => {
   switch (opts.shapeType) {
     case 'rect':
       drawRect(ctx, opts);
@@ -113,8 +113,4 @@ const draw = (ctx, opts) => {
     default:
       throw new Error(`unexpected shape type ${opts.shapeType}`);
   }
-};
-
-module.exports = {
-  draw
 };
